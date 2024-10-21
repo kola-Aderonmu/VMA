@@ -1,0 +1,7 @@
+cors
+axios
+dotenv
+express
+mongoose
+nodemon
+
