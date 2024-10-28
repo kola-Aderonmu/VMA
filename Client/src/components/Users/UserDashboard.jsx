@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import CreateVisitorRequest from "./CreateVisitorRequest";
-import VisitorRequestHistory from "./VisitorRequestHistory";
+import VisitorRequestHistory from "./VisitorRequestHistory.jsx";
 import UserProfile from "./UserProfile";
 import VisitorReports from "./VisitorReports";
 import NotificationCenter from "./NotificationCenter";

@@ -11,7 +11,7 @@ import {
   BarElement,
   Title,
 } from "chart.js";
-import { fetchVisitors, createVisitor } from "../../services/api";
+import { fetchVisitors, createVisitorRequest } from "../../services/api";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -87,7 +87,7 @@ const DashboardContent = () => {
         officeOfVisit: "HR",
         timeOfVisit: new Date().toISOString(),
       };
-      await createVisitor(newVisitor);
+      await createVisitorRequest(newVisitor);
       toast.success("New visitor created successfully");
       loadVisitors();
     } catch (error) {

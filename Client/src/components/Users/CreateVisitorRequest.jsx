@@ -65,16 +65,25 @@ const CreateVisitorRequest = ({ isOpen, onClose }) => {
     if (!validateForm()) return;
 
     setIsSubmitting(true);
-    setError(null);
     try {
       const formData = new FormData();
-      Object.keys(mainVisitor).forEach((key) => {
-        formData.append(key, mainVisitor[key]);
-      });
-      formData.append("additionalVisitors", JSON.stringify(additionalVisitors));
 
-      await createVisitorRequest(formData);
-      alert("Visitor request created successfully!");
+      // Add main visitor data
+      Object.keys(mainVisitor).forEach((key) => {
+        if (key === "photo" && mainVisitor[key]) {
+          formData.append("photo", mainVisitor[key]);
+        } else {
+          formData.append(key, mainVisitor[key]);
+        }
+      });
+
+      // Log the FormData contents
+      console.log("FormData contents:", Object.fromEntries(formData));
+
+      const response = await createVisitorRequest(formData);
+      console.log("Success:", response);
+
+      // Reset form
       setMainVisitor({
         title: "",
         name: "",
@@ -86,9 +95,10 @@ const CreateVisitorRequest = ({ isOpen, onClose }) => {
         visitTime: "",
         photo: null,
       });
-      setAdditionalVisitors([]);
+
+      alert("Visitor created successfully!");
     } catch (error) {
-      setError(error.message);
+      console.error("Detailed error:", error);
     } finally {
       setIsSubmitting(false);
     }

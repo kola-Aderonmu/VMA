@@ -20,7 +20,7 @@ const visitorRequestSchema = new mongoose.Schema({
   purpose: { type: String, required: true },
   officeOfVisit: {
     type: String,
-    required: true, // allows open input for Office of Visit
+    required: true, 
   },
   visitDate: { type: Date, required: true },
   visitTime: { type: String, required: true },

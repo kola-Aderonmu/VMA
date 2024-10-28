@@ -21,12 +21,15 @@ const VisitorRequestHistory = () => {
   const loadVisitorRequests = async () => {
     try {
       setLoading(true);
+      setError(null); // Reset error state
       const data = await fetchVisitorRequests();
-      setRequests(data);
+      setRequests(Array.isArray(data) ? data : []);
       setLoading(false);
     } catch (err) {
       console.error("Error loading visitor requests:", err);
-      setError("Failed to load visitor requests. Please try again.");
+      setError(
+        err.message || "Failed to load visitor requests. Please try again."
+      );
       setLoading(false);
     }
   };
@@ -76,7 +79,6 @@ const VisitorRequestHistory = () => {
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold mb-4">Visitor Request History</h2>
       {requests.length === 0 ? (
         <p>No visitor requests found.</p>
       ) : (

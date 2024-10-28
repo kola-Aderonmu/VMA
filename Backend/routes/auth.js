@@ -14,36 +14,28 @@ const {
   authenticateToken,
   authorizeRoles,
   checkSuperAdmin,
+  authenticateUser,
 } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-// Route for user login
+// Authentication Routes
 router.route("/login").post(loginUser);
-
-// Route for SuperAdmin login
 router.route("/superadmin/login").post(loginSuperAdmin);
-
-// Route for user signup
 router.route("/signup").post(signupUser);
+router.route("/logout").post(authenticateUser, logoutUser);
+router.post("/create-superadmin", createSuperAdmin);
+router.post("/refresh-token", authenticateUser, refreshToken);
 
-// Route for user logout
-router.route("/logout").post(authenticateToken, logoutUser);
-
-// Routes for SuperAdmin to manage users
+// SuperAdmin User Management Routes
 router
   .route("/pending-users")
-  .get(authenticateToken, authorizeRoles("superadmin"), getPendingUsers);
-
+  .get(authenticateUser, authorizeRoles("superadmin"), getPendingUsers);
 router
   .route("/approve-user/:id")
-  .put(authenticateToken, authorizeRoles("superadmin"), approveUser);
-
+  .put(authenticateUser, authorizeRoles("superadmin"), approveUser);
 router
   .route("/reject-user/:id")
-  .put(authenticateToken, authorizeRoles("superadmin"), rejectUser);
-
-router.post("/create-superadmin", createSuperAdmin);
-router.post("/refresh-token", authenticateToken, refreshToken);
+  .put(authenticateUser, authorizeRoles("superadmin"), rejectUser);
 
 module.exports = router;

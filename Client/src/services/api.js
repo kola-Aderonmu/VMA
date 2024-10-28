@@ -18,6 +18,10 @@ api.interceptors.request.use(
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
     }
+    // Don't override Content-Type if it's multipart/form-data
+    if (config.data instanceof FormData) {
+      delete config.headers["Content-Type"];
+    }
     return config;
   },
   (error) => Promise.reject(error)
@@ -29,6 +33,10 @@ api.interceptors.response.use(
     let errorMessage = "An unexpected error occurred";
     if (error.response) {
       errorMessage = error.response.data.message || errorMessage;
+      if (error.response.status === 401) {
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+      }
     } else if (error.request) {
       errorMessage = "No response received from the server";
     } else {
@@ -68,13 +76,43 @@ export const fetchVisitors = async () => {
   }
 };
 
-export const createVisitor = async (visitorData) => {
+export const createVisitorRequest = async (formData) => {
   try {
-    const response = await api.post("/visitors", visitorData);
+    const response = await api.post("/user/visitor-requests", formData, {
+      validateStatus: (status) => status < 500,
+    });
+
+    if (response.status === 413) {
+      throw new Error("File size too large. Please upload a smaller image.");
+    }
+
+    if (response.status === 401) {
+      console.log("Session expired. Please log in again.");
+      window.location.href = "/login";
+      return;
+    }
+
+    if (response.status !== 201) {
+      throw new Error(
+        response.data.message || "Failed to create visitor request"
+      );
+    }
+
     return response.data;
   } catch (error) {
-    console.error("Error creating visitor:", error);
-    throw error;
+    if (error.response?.status === 401) {
+      console.log("Session expired. Please log in again.");
+      window.location.href = "/login";
+      return;
+    }
+
+    const errorMessage = error.response?.data?.message || error.message;
+    console.error("Visitor Request Error Details:", {
+      message: errorMessage,
+      status: error.response?.status,
+      timestamp: new Date().toISOString(),
+    });
+    throw new Error(errorMessage);
   }
 };
 
@@ -105,14 +143,22 @@ export const fetchAutomatedResponses = () => api.get("/automated-responses");
 export const updateAutomatedResponse = (id, data) =>
   api.put(`/automated-responses/${id}`, data);
 
-export const createVisitorRequest = async (formData) => {
-  const response = await api.post("/visitor-requests", formData);
-  return response.data;
-};
+// export const createVisitorRequest = async (formData) => {
+//   const response = await api.post("/visitor-requests", formData);
+//   return response.data;
+// };
 
 export const fetchVisitorRequests = async () => {
-  const response = await api.get("/visitor-requests");
-  return response.data;
+  try {
+    const response = await api.get("/user/visitor-requests");
+    console.log("Visitor requests response:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching visitor requests:", error);
+    throw new Error(
+      error.response?.data?.message || "Error fetching visitor requests"
+    );
+  }
 };
 
 export const cancelVisitorRequest = async (requestId) => {
