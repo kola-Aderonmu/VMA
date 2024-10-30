@@ -148,6 +148,15 @@ export const updateAutomatedResponse = (id, data) =>
 //   return response.data;
 // };
 
+export const getUserDashboardStats = async () => {
+  try {
+    const response = await axios.get("/api/users/dashboard-stats");
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const fetchVisitorRequests = async () => {
   try {
     const response = await api.get("/user/visitor-requests");

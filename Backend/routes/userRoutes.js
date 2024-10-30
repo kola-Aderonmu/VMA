@@ -140,6 +140,7 @@ router.post(
 router.get("/profile", authenticateUser, UserController.getUserProfile);
 router.put("/profile", authenticateUser, UserController.updateUserProfile);
 router.get("/visitor-stats", authenticateUser, UserController.getVisitorStats);
+router.get("/stats", authenticateUser, UserController.getUserDashboardStats);
 
 // Logout route
 router.post("/logout", async (req, res) => {

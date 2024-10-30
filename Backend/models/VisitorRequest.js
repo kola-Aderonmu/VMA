@@ -1,4 +1,3 @@
-// server/models/VisitorRequest.js
 const mongoose = require("mongoose");
 
 const visitorRequestSchema = new mongoose.Schema({
@@ -16,14 +15,19 @@ const visitorRequestSchema = new mongoose.Schema({
     name: { type: String, required: true },
 
     phone: { type: String, required: true },
+
+    purpose: { type: String, required: true },
+
+    officeOfVisit: {
+      type: String,
+      required: true,
+    },
+
+    visitDate: { type: Date, required: true },
+
+    visitTime: { type: String, required: true },
   },
-  purpose: { type: String, required: true },
-  officeOfVisit: {
-    type: String,
-    required: true, 
-  },
-  visitDate: { type: Date, required: true },
-  visitTime: { type: String, required: true },
+
   additionalVisitors: [{ type: String }],
   status: {
     type: String,

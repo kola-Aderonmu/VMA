@@ -81,6 +81,7 @@ app.use("/api/auth/login", loginLimiter);
 app.use("/api/auth/superadmin/login", loginLimiter);
 app.use("/api/user", userRoutes);
 app.use("/uploads", express.static("uploads"));
+app.use("/api/dashboard", userRoutes);
 
 // Server startup
 const port = process.env.PORT || 5000;

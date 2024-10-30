@@ -3,6 +3,8 @@ import React, { useState } from "react";
 import { createVisitorRequest } from "../../services/api";
 import LoadingSpinner from "../common/LoadingSpinner";
 import ErrorHandler from "../common/ErrorHandler";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const CreateVisitorRequest = ({ isOpen, onClose }) => {
   const [mainVisitor, setMainVisitor] = useState({
@@ -59,12 +61,13 @@ const CreateVisitorRequest = ({ isOpen, onClose }) => {
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
 
     setIsSubmitting(true);
+    setError(null);
+
     try {
       const formData = new FormData();
 
@@ -77,28 +80,54 @@ const CreateVisitorRequest = ({ isOpen, onClose }) => {
         }
       });
 
-      // Log the FormData contents
-      console.log("FormData contents:", Object.fromEntries(formData));
+      if (additionalVisitors.length > 0) {
+        formData.append(
+          "additionalVisitors",
+          JSON.stringify(additionalVisitors)
+        );
+      }
 
       const response = await createVisitorRequest(formData);
-      console.log("Success:", response);
-
-      // Reset form
-      setMainVisitor({
-        title: "",
-        name: "",
-        gender: "",
-        phone: "",
-        purpose: "",
-        officeOfVisit: "",
-        visitDate: "",
-        visitTime: "",
-        photo: null,
+      console.log("API response:", response);
+      // Show toast notification regardless of `success` check
+      toast.success("Visitor request created successfully!", {
+        position: "top-right",
+        autoClose: 4000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
       });
 
-      alert("Visitor created successfully!");
+      if (response.success) {
+        // Reset form and close modal
+        setMainVisitor({
+          title: "",
+          name: "",
+          gender: "",
+          phone: "",
+          purpose: "",
+          officeOfVisit: "",
+          visitDate: "",
+          visitTime: "",
+          photo: null,
+        });
+        setAdditionalVisitors([]);
+        onClose();
+      }
     } catch (error) {
-      console.error("Detailed error:", error);
+      setError(error.message || "Failed to create visitor request");
+      console.error("Error creating visitor request:", error);
+
+      // Display error toast notification
+      toast.error("Failed to create visitor request. Please try again.", {
+        position: "top-right",
+        autoClose: 4000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
     } finally {
       setIsSubmitting(false);
     }

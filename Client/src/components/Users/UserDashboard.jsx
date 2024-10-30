@@ -5,16 +5,18 @@ import VisitorRequestHistory from "./VisitorRequestHistory.jsx";
 import UserProfile from "./UserProfile";
 import VisitorReports from "./VisitorReports";
 import NotificationCenter from "./NotificationCenter";
+import UserHome from "./UserHome";
 import { FaUserCircle, FaSignOutAlt } from "react-icons/fa";
 import { fetchUserProfile, logout } from "../../services/api";
 
 const UserDashboard = () => {
-  const [activeTab, setActiveTab] = useState("history");
+  const [activeTab, setActiveTab] = useState("home");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
   const tabs = [
+    { id: "home", label: "Home🏡", component: UserHome },
     {
       id: "history",
       label: "Request History",

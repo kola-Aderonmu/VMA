@@ -5,7 +5,6 @@ const Notification = require("../models/Notification");
 
 const createVisitorRequest = async (req, res) => {
   try {
-    // Validate user authentication
     if (!req.user) {
       return res.status(401).json({
         success: false,
@@ -24,48 +23,36 @@ const createVisitorRequest = async (req, res) => {
       visitTime,
     } = req.body;
 
-    // Create new visitor instance
-    const newVisitor = new Visitor({
-      title,
-      name,
-      gender,
-      phoneNumber: phone,
-      purpose,
-      officeOfVisit,
-      timeOfVisit: visitTime,
-      dateOfVisit: visitDate,
-      requestedBy: req.user.id,
-      status: "pending",
-      photo: req.file ? `/uploads/${req.file.filename}` : null,
-    });
-
-    // Save visitor to database
-    const savedVisitor = await newVisitor.save();
-    console.log("Visitor saved successfully:", savedVisitor);
-
-    // Create visitor request
-    const visitorRequest = await VisitorRequest.create({
+    // Create visitor request with correct structure
+    const newVisitorRequest = new VisitorRequest({
       userId: req.user.id,
-      mainVisitor: savedVisitor._id,
-      status: "pending",
-      visitDate: visitDate,
+      mainVisitor: {
+        title,
+        name,
+        gender,
+        phone,
+        purpose,
+        officeOfVisit,
+        visitDate,
+        visitTime,
+      },
+      photoUrl: req.file ? `/uploads/${req.file.filename}` : null,
     });
 
-    // Create notification for office
+    const savedVisitorRequest = await newVisitorRequest.save();
+
+    // Create notification
     await Notification.create({
       userId: req.user.id,
-      type: "NEW_VISITOR_REQUEST",
+      type: "info",
       message: `New visitor request from ${name} for ${officeOfVisit}`,
-      visitorRequestId: visitorRequest._id,
+      visitorRequestId: savedVisitorRequest._id,
     });
 
     res.status(201).json({
       success: true,
       message: "Visitor request created successfully",
-      data: {
-        visitor: savedVisitor,
-        request: visitorRequest,
-      },
+      data: savedVisitorRequest,
     });
   } catch (error) {
     console.error("Visitor creation error:", error);
@@ -273,6 +260,76 @@ const handleVisitorApproval = async (req, res) => {
   }
 };
 
+const getUserDashboardStats = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // Get basic metrics
+    const [totalRequests, pendingRequests, approvedRequests, rejectedRequests] =
+      await Promise.all([
+        VisitorRequest.countDocuments({ userId }),
+        VisitorRequest.countDocuments({ userId, status: "pending" }),
+        VisitorRequest.countDocuments({ userId, status: "approved" }),
+        VisitorRequest.countDocuments({ userId, status: "rejected" }),
+      ]);
+
+    // Get monthly data for the line chart (last 6 months)
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+    const monthlyData = await VisitorRequest.aggregate([
+      {
+        $match: {
+          userId: userId,
+          createdAt: { $gte: sixMonthsAgo },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" },
+          },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { "_id.year": 1, "_id.month": 1 },
+      },
+    ]);
+
+    // Get recent activity
+    const recentActivity = await VisitorRequest.find({ userId })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .select("mainVisitor.name status createdAt");
+
+    // Format the response
+    const formattedMonthlyData = monthlyData.map((item) => ({
+      month: `${item._id.month}/${item._id.year}`,
+      count: item.count,
+    }));
+
+    const formattedRecentActivity = recentActivity.map((activity) => ({
+      visitorName: activity.mainVisitor.name,
+      status: activity.status,
+      date: activity.createdAt,
+    }));
+
+    res.json({
+      totalRequests,
+      pendingRequests,
+      approvedRequests,
+      rejectedRequests,
+      monthlyData: formattedMonthlyData,
+      recentActivity: formattedRecentActivity,
+    });
+  } catch (error) {
+    console.error("Dashboard stats error:", error);
+    res.status(500).json({ message: "Error fetching dashboard statistics" });
+  }
+};
+
 module.exports = {
   createVisitorRequest,
   getVisitorRequests,
@@ -283,4 +340,5 @@ module.exports = {
   updateVisitorRequestStatus,
   getNotifications,
   handleVisitorApproval,
+  getUserDashboardStats,
 };
